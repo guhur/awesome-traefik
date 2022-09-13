@@ -1,0 +1,30 @@
+version: '3.7'
+services:
+  plex:
+    image: linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    ports:
+      - 32400:32400
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    networks:
+      - traefik_network
+    volumes:
+      - ${PLEX_CONFIG_DIR}:/config
+      - ${PLEX_MOVIES_DIR}:/data/movies
+      - ${PLEX_TV_DIR}:/data/tv
+    labels:
+      - "traefik.http.routers.plex.rule=Host(`${PLEX_DOMAIN}`)"
+      - "traefik.http.routers.plex.middlewares=auth"
+      - "traefik.http.routers.plex.tls=true"
+      - "traefik.http.routers.plex.tls.certresolver=leresolver"
+      - "traefik.http.routers.plex.entrypoints=web,websecure"
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+
+  
+networks:
+  traefik_network:
+    external: true

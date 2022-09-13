@@ -1,0 +1,58 @@
+server:
+  host: 0.0.0.0
+  port: 9091
+  read_buffer_size: 4096
+  write_buffer_size: 4096
+  path: "authelia"
+log:
+  level: info
+  file_path: /config/logs/authelia.log
+jwt_secret: AUTHELIA_JWT_SECRET
+default_redirection_url: https://authelia.mieuxvoter.fr
+authentication_backend:
+  disable_reset_password: false
+  file:
+    path: /config/users_database.yml
+    password:
+      algorithm: argon2id
+      iterations: 1
+      key_length: 32
+      salt_length: 16
+      memory: 512
+      parallelism: 8
+access_control:
+  default_policy: deny
+  rules:
+    - domain:
+      - mieuxvoter.fr
+      - "*.mieuxvoter.fr"
+      policy: two_factor
+session:
+  name: authelia_session
+  secret: AUTHELIA_SESSION_SECRET
+  expiration: 1h
+  inactivity: 5m
+  remember_me_duration: 1M
+  domain: mieuxvoter.fr
+regulation:
+  max_retries: 3
+  find_time: 2m
+  ban_time: 5m
+storage:
+  encryption_key: AUTHELIA_ENCRYPTION_KEY
+  local:
+    path: /config/db.sqlite3
+notifier:
+  disable_startup_check: false
+  smtp:
+    username: AUTHELIA_SMTP_USERNAME
+    password: AUTHELIA_SMTP_PASSWORD
+    host: AUTHELIA_SMTP_HOST
+    port: AUTHELIA_SMTP_PORT
+    sender: AUTHELIA_SMTP_SENDER
+    subject: "[Authelia] {title}"
+    startup_check_address: test@authelia.com
+    disable_require_tls: false
+    tls:
+      skip_verify: false
+      minimum_version: TLS1.2

@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  authelia:
+    image: ghcr.io/authelia/authelia:${AUTHELIA_VERSION:-4.36.1}
+    container_name: authelia
+    user: "1000:1000"
+    environment:
+      - TZ=Europe/Paris
+    volumes:
+      - ${AUTHELIA_CONFIG_DIR}:/config
+    restart: unless-stopped
+    networks:
+      - authelia-net
+
+networks:
+  authelia-net:
+    external: true
+    name: swag_default

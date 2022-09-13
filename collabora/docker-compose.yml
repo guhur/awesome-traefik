@@ -1,0 +1,40 @@
+version: '3.7'
+services:
+  collabora:
+    image: collabora/code:latest
+    container_name: collabora
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    expose:
+      - '9980'
+    ports:
+      - '9980:9980'
+    environment:
+      - VIRTUAL_PROTO=http
+      - VIRTUAL_PORT=9980
+      - "VIRTUAL_HOST=${COLLABORA_URL}"
+      - 'dictionaries=en_US,fr_FR'
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - "aliasgroup1=${COLLABORA_ALIASGROUP1}"
+      - "username=${COLLABORA_USERNAME}"
+      - "password=${COLLABORA_PASSWORD}"
+      - "extra_params=--o:ssl.enable=false --o:ssl.termination=true"
+    cap_add:
+      - MKNOD
+    tty: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=9980"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.collabora.entrypoints=web,websecure"
+      - "traefik.http.routers.collabora.rule=Host(`${COLLABORA_URL}`)"
+      - "traefik.http.services.collabora.loadbalancer.server.port=9980"
+      - "traefik.http.routers.collabora.tls=true"
+      - "traefik.http.routers.collabora.tls.certresolver=leresolver"
+
+networks:
+  traefik_network:
+    external: true 

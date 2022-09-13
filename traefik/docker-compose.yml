@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  traefik:
+    image: traefik
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DUCKDNS_TOKEN=${TRAEFIK_DUCKDNS_TOKEN}
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ${TRAEFIK_DATA_DIR}:/etc/traefik
+      - ${TRAEFIK_CONFIG}:/etc/traefik/traefik.toml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD_HASH}"
+      # Routing of the dashboard
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${TRAEFIK_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.tls.certresolver=leresolver"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+networks:
+  traefik-network:
+    driver: bridge
+    name: traefik_network

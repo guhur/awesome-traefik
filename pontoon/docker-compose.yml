@@ -1,0 +1,61 @@
+# docker-compose for Pontoon development.
+
+# Note: tested with docker-compose v2.10.2
+version: '3.7'
+services:
+  pontoon:
+    build:
+      context: ./pontoon
+      dockerfile: ./docker/Dockerfile
+      target: server
+      args:
+        ENV_FILE: $ENV_FILE
+    image: local/pontoon
+    depends_on:
+      - postgresql
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./pontoon/pontoon:/app/pontoon
+      - ./pontoon/requirements:/app/requirements
+      - ./pontoon/tag-admin:/app/tag-admin
+      - ./pontoon/translate:/app/translate
+        # - ~/.ssh:/home/pontoon/.ssh
+    networks:
+      - pontoon-net
+      - lan
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.pontoon.entrypoints=web,websecure"
+      - "traefik.http.routers.pontoon.rule=Host(`${SITE_URL}`)"
+      - "traefik.http.services.pontoon.loadbalancer.server.port=8000"
+      - "traefik.http.routers.pontoon.tls=true"
+      - "traefik.http.routers.pontoon.tls.certresolver=leresolver"
+
+  # Database
+  postgresql:
+    build:
+      context: ./pontoon/docker/postgres
+      dockerfile: ./Dockerfile
+    hostname: pontoon-db
+    environment:
+      # Create the superuser account
+      - POSTGRES_USER=pontoon
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_DB=pontoon
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - lan
+
+# Persist database
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  lan:
+  pontoon-net:
+    external: true
+    name: traefik_network
