@@ -1,3 +1,6 @@
 [submodule "pontoon/pontoon"]
 	path = pontoon/pontoon
 	url = git@github.com:guhur/pontoon.git
+[submodule "moodle/moodle-docker"]
+	path = moodle/moodle-docker
+	url = https://github.com/guhur/moodle-docker.git

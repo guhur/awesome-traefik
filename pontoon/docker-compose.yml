@@ -13,8 +13,8 @@ services:
     image: local/pontoon
     depends_on:
       - postgresql
-    ports:
-      - '8000:8000'
+        # ports:
+        #   - '8000:8000'
     volumes:
       - ./pontoon/pontoon:/app/pontoon
       - ./pontoon/requirements:/app/requirements

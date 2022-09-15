@@ -64,6 +64,8 @@ docker compose --env-file /path/to/your/env logs -f
 
 Restart the container and visit: `http://localhost:9980`. You should obtain a "OK" message.
 
+1. Is it still not working? Start an interactive session with `docker exec -it [name-of-the-container] sh` 
+
 # Installing services
 
 ## Generic
@@ -118,6 +120,16 @@ docker compose --env-file pontoon/.env up -d
 ```
 
 
+# Stopping a service
+
+If you still have access to your `.env` file:
+
+```bash
+cd service
+docker compose --env-file /path/to/service's/env up -d 
+```
+
+If things are... more complicated... find the container name(s) (e.g. with `docker stats`) and launch `docker stop [containername]`.
 
 # :pray: Credits
 

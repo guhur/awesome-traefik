@@ -2,10 +2,16 @@ version: '3.8'
 
 services:
   mariadb:
-    image: mariadb:10.10
+    image: mariadb:10.9
     container_name: moodle_db
     restart: unless-stopped
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    command: >
+              --character-set-server=utf8mb4
+              --collation-server=utf8mb4_bin
+              --innodb_file_per_table=On
+              --wait-timeout=28800
+              --transaction-isolation=READ-COMMITTED
+              --binlog-format=ROW
     environment:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -19,36 +25,46 @@ services:
     volumes:
       - mysql_db:/var/lib/mysql
 
-  moodle:
-    image: docker.io/bitnami/moodle:4
-    ports:
-      - '80:8080'
-      - '443:8443'
-    environment:
-      - MOODLE_DATABASE_HOST=mariadb
-      - MOODLE_DATABASE_PORT_NUMBER=3306
-      - MOODLE_DATABASE_USER=bn_moodle
-      - MOODLE_DATABASE_NAME=bitnami_moodle
-    volumes:
-      - 'moodle_data:/bitnami/moodle'
-      - 'moodledata_data:/bitnami/moodledata'
+
+  server:
+    image: "moodlehq/moodle-php-apache:${MOODLE_DOCKER_PHP_VERSION}"
+    # image: moodlehq/moodleapp:4.0.0
+    container_name: moodle_app
+    restart: unless-stopped
     depends_on:
       - mariadb
+    environment:
+      MOODLE_DOCKER_DBTYPE: mariadb
+      MOODLE_DOCKER_DBNAME: $MYSQL_DATABASE
+      MOODLE_DOCKER_DBUSER: $MYSQL_USER
+      MOODLE_DOCKER_DBPASS: $MYSQL_PASSWORD
+      MOODLE_DOCKER_WEB_HOST: moodle.macrovision.fr
+      MOODLE_DOCKER_DBCOLLATION: utf8mb4_bin
+      MOODLE_DATABASE_PORT_NUMBER: 3306
+    volumes:
+      - ./moodle:/var/www/html/
+    ports:
+        - '8080:80'
+        - '8443:8443'
+    networks:
+      - lan
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.moodle.entrypoints=web,websecure"
+      - "traefik.http.routers.moodle.rule=Host(`${MOODLE_URL}`)"
+      - "traefik.http.services.moodle.loadbalancer.server.port=80"
+      - "traefik.http.routers.moodle.tls=true"
+      - "traefik.http.routers.moodle.tls.certresolver=leresolver"
 
 volumes:
-  mysql_data:
+  mysql_db:
     driver: local
   moodle_data:
     driver: local
-  moodledata_data:
-    driver: local
 
-volumes:
-  mysql_data:
-    driver: local
-  mautic_data:
-    driver: local
 networks:
-  mautic-net:
-    external: true
-    name: swag_default
+  lan:
+  traefik_network:
+    external: true 

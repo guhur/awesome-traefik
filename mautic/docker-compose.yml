@@ -1,46 +1,64 @@
-version: '2'
+version: '3.8'
 
 services:
-
-  mauticdb:
-    image: percona/percona-server:5.7
-    container_name: mauticdb
-    volumes:
-      - mysql_data:/var/lib/mysql
+  mautic_db:
+    image: mariadb
+    container_name: mautic_db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
-      - MYSQL_ROOT_PASSWORD=$MAUTIC_DB_PASSWORD
-    command:
-      --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=${DB_NAME:-mautic}
+      - MYSQL_USER=${DB_USER:-mautic}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
     networks:
-      - mautic-net
+      - lan
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - lan
 
   mautic:
     image: mautic/mautic:latest
     container_name: mautic
     links:
-      - mauticdb:mysql
+      - mautic_db:mysql
     depends_on:
-      - mauticdb
-    ports:
-      - ${MAUTIC_PORT:-8080}:80
+      - mautic_db
+        # ports:
+        #   - ${MAUTIC_PORT:-8080}:80
     volumes:
       - mautic_data:/var/www/html
     environment:
-      - MAUTIC_DB_HOST=${MAUTIC_DB_HOST:-mauticdb}
+      - MAUTIC_DB_HOST=mautic_db
       - MYSQL_PORT_3306_TCP=3306
-      - MAUTIC_DB_USER=root
-      - MAUTIC_DB_PASSWORD=$MAUTIC_DB_PASSWORD
-      - MAUTIC_DB_NAME=${MAUTIC_DB_NAME:-mautic}
+      - MAUTIC_DB_USER=${DB_USER:-mautic}
+      - MAUTIC_DB_PASSWORD=$DB_PASSWORD
+      - MAUTIC_DB_NAME=${DB_NAME:-mautic}
       - MAUTIC_RUN_CRON_JOBS=true
     networks:
+      - lan
       - mautic-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.mautic.entrypoints=web,websecure"
+      - "traefik.http.routers.mautic.rule=Host(`${MAUTIC_URL}`)"
+      - "traefik.http.services.mautic.loadbalancer.server.port=80"
+      - "traefik.http.routers.mautic.tls=true"
+      - "traefik.http.routers.mautic.tls.certresolver=leresolver"
 
 volumes:
-  mysql_data:
+  db_data:
     driver: local
   mautic_data:
     driver: local
+
 networks:
+  lan:
   mautic-net:
     external: true
-    name: swag_default
+    name: traefik_network
