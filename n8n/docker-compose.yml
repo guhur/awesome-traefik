@@ -1,10 +1,9 @@
 version: '2'
 
 services:
-  
   postgres:
     image: postgres:11
-    container_name: $N8N_DB_HOST
+    container_name: n8n_db
     restart: unless-stopped
     environment:
       - POSTGRES_USER=$N8N_DB_USER
@@ -25,7 +24,7 @@ services:
     container_name: n8n
     restart: unless-stopped
     depends_on:
-      - database
+      - postgres
     environment:
       - PUID=1000
       - PGID=1000
@@ -34,7 +33,7 @@ services:
       - DB_TYPE=$N8N_DB_TYPE
       - DB_POSTGRESDB_PORT=$N8N_DB_PORT
       - DB_POSTGRESDB_DATABASE=$N8N_DB_DATABASE
-      - DB_POSTGRESDB_HOST=$N8N_DB_HOST
+      - DB_POSTGRESDB_HOST=n8n_db
       - DB_POSTGRESDB_USER=$N8N_DB_USER
       - DB_POSTGRESDB_PASSWORD=$N8N_DB_PASSWORD
     volumes:
