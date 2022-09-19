@@ -1,0 +1,115 @@
+version: "3.8"
+
+services:
+  db:
+    image: mariadb
+    container_name: matomo_db
+    command: --max-allowed-packet=64MB
+    restart: always
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: $DB_PASS
+      MYSQL_PASSWORD: $DB_PASS
+      MYSQL_DATABASE: $DB_NAME
+      MYSQL_USER: $DB_USER
+    networks:
+      - lan
+
+  cloudbeaver:
+    image: dbeaver/cloudbeaver
+    container_name: matomo_dbeaver
+    restart: always
+    profiles: 
+      - debug
+        # ports:
+        #   - '8978:8978'
+    volumes: 
+     - cloudbeaver:/opt/cloudbeaver/workspace
+    networks:
+      - lan
+      - traefik_network
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Paris
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.matomo_dbeaver.entrypoints=web,websecure"
+      - "traefik.http.routers.matomo_dbeaver.rule=Host(`${DBEAVER_URL}`)"
+      - "traefik.http.services.matomo_dbeaver.loadbalancer.server.port=8978"
+      - "traefik.http.routers.matomo_dbeaver.tls=true"
+      - "traefik.http.routers.matomo_dbeaver.tls.certresolver=leresolver"
+
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+      # ports:
+      #   - 8080:80
+    environment:
+      PMA_HOST: matomo_db
+      PMA_HOST: matomo_db
+      PMA_ABSOLUTE_URI: ${PMA_URL}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_USER: ${DB_USER}
+    profiles:
+      - debug
+    networks:
+      - lan
+      - traefik_network
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Paris
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.matomo_pma.entrypoints=web,websecure"
+      - "traefik.http.routers.matomo_pma.rule=Host(`${PMA_URL}`)"
+      - "traefik.http.services.matomo_pma.loadbalancer.server.port=80"
+      - "traefik.http.routers.matomo_pma.tls=true"
+      - "traefik.http.routers.matomo_pma.tls.certresolver=leresolver"
+
+
+  matomo:
+    image: matomo
+    container_name: matomo
+    restart: always
+    volumes:
+#     - ./config:/var/www/html/config
+#     - ./logs:/var/www/html/logs
+      - matomo:/var/www/html
+    environment:
+      MATOMO_DATABASE_HOST: db
+      MATOMO_DATABASE_PASSWORD: $DB_PASS
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: $DB_USER
+      MATOMO_DATABASE_DBNAME: $DB_NAME
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Paris
+    networks:
+      - lan
+      - traefik_network
+    ports:
+      - 8085:80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.matomo.entrypoints=web,websecure"
+      - "traefik.http.routers.matomo.rule=Host(`${MATOMO_URL}`)"
+      - "traefik.http.services.matomo.loadbalancer.server.port=80"
+      - "traefik.http.routers.matomo.tls=true"
+      - "traefik.http.routers.matomo.tls.certresolver=leresolver"
+
+volumes:
+  db:
+  matomo:
+  cloudbeaver:
+
+networks:
+  lan:
+  traefik_network:
+    external: true 

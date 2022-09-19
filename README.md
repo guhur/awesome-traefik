@@ -20,6 +20,7 @@ Here is a list of services I frequently use:
 - [collabora](#collabora) (soon)
 - [mailu](#mailu) (soon)
 - [mattermost](#mattermost) (soon)
+- [matomo](#matomo) 
 - [mautic](#generic)
 - [n8n](#generic)
 - [nextcloud](#nextcloud)
