@@ -24,6 +24,7 @@ services:
     wordpress:
       image: wordpress
       restart: unless-stopped
+      container_name: wordpress
         # ports:
         #     - 8080:80
       environment:
@@ -31,6 +32,11 @@ services:
         WORDPRESS_DB_USER: ${DB_USER:-wordpress}
         WORDPRESS_DB_PASSWORD: ${DB_PASS}
         WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+        PUID: 1000
+        PGID: 1000
+        TZ: Europe/Paris
+      volumes:
+        - ${WORDPRESS_SITE_DIR}:/var/www/html/
       networks:
         - lan
         - traefik_network
