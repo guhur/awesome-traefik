@@ -21,11 +21,13 @@ Here is a list of services I frequently use:
 - [mailu](#mailu) (soon)
 - [mattermost](#mattermost) (soon)
 - [matomo](#matomo) 
+- [metabase](#metabase) 
 - [mautic](#generic)
 - [n8n](#generic)
 - [nextcloud](#nextcloud)
 - [plex](#plex) (soon)
 - [portainer](#generic)
+- [wordpress](#generic)
 
 If you need another service, you can open an issue or contact me directly.
 

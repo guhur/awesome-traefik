@@ -5,7 +5,7 @@ services:
     image: mariadb
     container_name: matomo_db
     command: --max-allowed-packet=64MB
-    restart: always
+    restart: unless-stopped
     volumes:
       - db:/var/lib/mysql
     environment:
@@ -19,7 +19,7 @@ services:
   cloudbeaver:
     image: dbeaver/cloudbeaver
     container_name: matomo_dbeaver
-    restart: always
+    restart: unless-stopped
     profiles: 
       - debug
         # ports:
@@ -44,7 +44,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin
-    restart: always
+    restart: unless-stopped
       # ports:
       #   - 8080:80
     environment:
@@ -75,7 +75,7 @@ services:
   matomo:
     image: matomo
     container_name: matomo
-    restart: always
+    restart: unless-stopped
     volumes:
 #     - ./config:/var/www/html/config
 #     - ./logs:/var/www/html/logs
