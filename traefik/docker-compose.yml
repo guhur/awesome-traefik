@@ -10,9 +10,9 @@ services:
       - "443:443"
     environment:
       - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Paris
+      - PUID=$PUID
+      - PGID=$PGID
+      - TZ=$TIMEZONE
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - ${DATA_DIR}:/etc/traefik

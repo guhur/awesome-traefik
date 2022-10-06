@@ -1,5 +1,4 @@
 .vim/plugged
 .vim/.netrwhist
 .vim/autoload
-bin
 .env.local

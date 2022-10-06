@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# This script launches a docker compose
+
+function usage()
+{
+   cat << HEREDOC
+   Usage: $progname --service SERVICE [--env-file ENV_FILE]
+   optional arguments:
+     -h, --help               show this help message and exit
+     -s, --service SERVICE    service name (see README for a list)
+     -e, --env-file ENV_FILE  file containing service config
+HEREDOC
+
+   exit 1
+}
+
+
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -h|--help) usage ;;
+	-s|--service) service="$2"; shift ;; 
+	-e|--env-file) envfile="$2"; shift ;; 
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+
+if [ -z ${service+x} ]; then
+	echo "Please provide a service"
+        exit 1
+fi
+
+echo "$SCRIPT_DIR/../$service"
+if [ ! -d "$SCRIPT_DIR/../$service" ]; then
+	echo "Please provide a service among the file of available services"
+        exit 1
+fi
+
+# Create a env-file by gathering the generic one with the one provided in command line
+tmp_envfile=$(mktemp /tmp/envfile.XXXXXX)
+default_env="$SCRIPT_DIR/../.env.local"
+if [ ! -f $default_env ]; then
+	echo "Please copy awesome-traefik/.env in awesome-traefik/.env.local"
+	exit 2
+fi
+cat $default_env > $tmp_envfile
+if [ ! -z ${envfile+x} ]; then 
+	if [ ! -f "$envfile" ]; then
+		echo "Can't find $envfile"
+		exit 3
+	fi
+	cat $envfile >> $tmp_envfile
+fi
+
+
+pushd "$SCRIPT_DIR/../$service"
+	docker compose --env-file $tmp_envfile up -d --force-recreate --build
+popd
