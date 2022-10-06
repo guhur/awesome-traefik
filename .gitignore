@@ -2,3 +2,5 @@
 .vim/.netrwhist
 .vim/autoload
 .env.local
+logs
+db

@@ -10,9 +10,9 @@ services:
       - MYSQL_DATABASE=${NEXTCLOUD_MYSQL_DATABASE}
       - MYSQL_USER=${NEXTCLOUD_MYSQL_USER}
       - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PASSWORD}
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Paris
+      - PUID=$PUID
+      - PGID=$PUID
+      - TZ=$TIMEZONE
     networks:
       - lan
     volumes:
@@ -30,9 +30,9 @@ services:
       - MYSQL_USER=${NEXTCLOUD_MYSQL_USER}
       - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PASSWORD}
       - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_URL}
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Paris
+      - PUID=$PUID
+      - PGID=$PUID
+      - TZ=$TIMEZONE
     networks:
       - lan
       - traefik_network
@@ -65,9 +65,9 @@ services:
     volumes:
       - ${NEXTCLOUD_DATA_DIR}/data:/data
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Paris
+      - PUID=$PUID
+      - PGID=$PUID
+      - TZ=$TIMEZONE
       - RESTIC_REPOSITORY=$RESTIC_REPOSITORY
       - BACKUP_CRON=${RESTIC_BACKUP_CRON:-0 */6 * * *}
       - RESTIC_FORGET_ARGS=--prune --keep-last 1 --keep-daily 1
