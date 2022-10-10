@@ -162,32 +162,6 @@
   # Default: true
   #
   # exposedByDefault = false
-
-[http.middlewares]
-  [http.middlewares.nextcloud-redirectregex.redirectRegex]
-    permanent = true
-    regex = "https://(.*)/.well-known/(card|cal)dav"
-    replacement = "https://${1}/remote.php/dav/"
-
-  [http.middlewares.middlewares-authentik.forwardAuth]
-    # https://github.com/goauthentik/authentik/issues/2366
-        address = "http://authentik_server:9000/outpost.goauthentik.io/auth/traefik"
-        trustForwardHeader = true
-        authResponseHeaders = [
-       	  "X-authentik-username",
-          "X-authentik-groups",
-          "X-authentik-email",
-          "X-authentik-name",
-          "X-authentik-uid",
-          "X-authentik-jwt",
-          "X-authentik-meta-jwks",
-          "X-authentik-meta-outpost",
-          "X-authentik-meta-provider",
-          "X-authentik-meta-app",
-          "X-authentik-meta-version",
-	]
-
-
 [metrics]
   [metrics.prometheus]
     addRoutersLabels = true

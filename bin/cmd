@@ -5,9 +5,10 @@
 function usage()
 {
    cat << HEREDOC
-   Usage: $progname --service SERVICE [--env-file ENV_FILE]
+   Usage: $progname --command COMMAND --service SERVICE [--env-file ENV_FILE]
    optional arguments:
      -h, --help               show this help message and exit
+     -c, --command COMMAND    command name (among logs, up & down)
      -s, --service SERVICE    service name (see README for a list)
      -e, --env-file ENV_FILE  file containing service config
 HEREDOC
@@ -24,17 +25,31 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         -h|--help) usage ;;
 	-s|--service) service="$2"; shift ;; 
+	-c|--command) cmd="$2"; shift ;; 
 	-e|--env-file) envfile="$2"; shift ;; 
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
 
-
 if [ -z ${service+x} ]; then
 	echo "Please provide a service"
+	usage
         exit 1
 fi
+
+if [ -z ${cmd+x} ]; then
+	echo "Please provide a command"
+	usage
+        exit 1
+fi
+case "$cmd" in
+    up) cmd="up -d --force-recreate --build";;
+    logs) cmd="logs -f";;
+    down) cmd="down";;
+    *) cmd="$cmd"
+esac
+
 
 echo "$SCRIPT_DIR/../$service"
 if [ ! -d "$SCRIPT_DIR/../$service" ]; then
@@ -46,7 +61,7 @@ fi
 tmp_envfile=$(mktemp /tmp/envfile.XXXXXX)
 default_env="$SCRIPT_DIR/../.env.local"
 if [ ! -f $default_env ]; then
-	echo "Please copy awesome-traefik/.env in awesome-traefik/.env.local"
+	echo "Please copy awesome-traefik/.env in awesome-traefik/.env.local and edit the latter."
 	exit 2
 fi
 cat $default_env > $tmp_envfile
@@ -60,5 +75,5 @@ fi
 
 
 pushd "$SCRIPT_DIR/../$service"
-	docker compose --env-file $tmp_envfile up -d --force-recreate --build
+	docker compose --env-file $tmp_envfile $cmd
 popd

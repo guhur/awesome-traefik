@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  metabase:
+    image: metabase/metabase
+    restart: unless-stopped
+    container_name: metabase
+    environment:
+      # MB_DB_TYPE: mysql
+      # MB_DB_DBNAME: $DB_NAME
+      # MB_DB_PORT: $DB_PORT
+      # MB_DB_USER: $DB_USER
+      # MB_DB_PASS: $DB_PASS
+      # MB_DB_HOST: $DB_HOST
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TIMEZONE}
+    networks:
+      - matomo_lan
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.metabase.entrypoints=web,websecure"
+      - "traefik.http.routers.metabase.rule=Host(metabase.`${DOMAIN}`)"
+      - "traefik.http.services.metabase.loadbalancer.server.port=3000"
+      - "traefik.http.routers.metabase.tls=true"
+      - "traefik.http.routers.metabase.tls.certresolver=leresolver"
+
+networks:
+  lan:
+  traefik_network:
+    external: true 
+  matomo_lan:
+    external: true 

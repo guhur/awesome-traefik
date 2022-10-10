@@ -1,0 +1,148 @@
+services:
+  postgresql:
+    image: postgres:12-alpine
+    container_name: authentik_db
+    networks:
+      - lan
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready  -d $${DB_NAME:-authentik} -U $${DB_USER:-authentik}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_USER: ${DB_USER:-authentik}
+      POSTGRES_DB: ${DB_NAME:-authentik}
+      PUID: 1000
+      PGID: 1000
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    container_name: authentik_redis
+    networks:
+      - lan
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+
+  server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-latest}
+    restart: unless-stopped
+    container_name: authentik_server
+    command: server
+    networks:
+      - traefik_network
+      - lan
+    environment:
+      AUTHENTIK_HOST: $DOMAIN
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${DB_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${DB_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${DB_PASS}
+      AUTHENTIK_SECRET_KEY: $AUTHENTIK_SECRET_KEY
+      AUTHENTIK_ERROR_REPORTING__ENABLED: ${REPORT_ERROR:-true}
+      AUTHENTIK_COOKIE_DOMAIN: $DOMAIN
+      WORKERS: ${WORKERS:-1}
+      PUID: 1000
+      PGID: 1000
+    volumes:
+      - ./media:/media
+      - ./custom-templates:/templates
+      - geoip:/geoip
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      ## HTTP Routers
+      - "traefik.http.routers.authentik-rtr.rule=Host(`authentik.$DOMAIN`)"
+      - "traefik.http.routers.authentik-rtr.entrypoints=web,websecure"
+      - "traefik.http.routers.authentik-rtr.tls=true"
+      - "traefik.http.routers.authentik-rtr.tls.certresolver=leresolver"
+      ## Individual Application forwardAuth regex (catch any subdomain using individual application forwardAuth)  
+      # - "traefik.http.routers.authentik-rtr-outpost.rule=Host(`whoami-test.$DOMAIN`)"
+      - "traefik.http.routers.authentik-rtr-outpost.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.$DOMAIN`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      - "traefik.http.routers.authentik-rtr-outpost.entrypoints=web,websecure"
+      - "traefik.http.routers.authentik-rtr-outpost.tls=true"
+      - "traefik.http.routers.authentik-rtr-outpost.tls.certresolver=leresolver"
+      ## HTTP Services
+      - "traefik.http.routers.authentik-rtr.service=authentik-svc"
+      - "traefik.http.services.authentik-svc.loadBalancer.server.port=9000"
+      ## Create middlewares
+      ### https://github.com/goauthentik/authentik/issues/2366
+      - "traefik.http.middlewares.authentik.forwardAuth.address=http://authentik_server:9000/outpost.goauthentik.io/auth/traefik"
+      - "traefik.http.middlewares.authentik.forwardAuth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authentik.forwardAuth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
+
+  worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-latest}
+    restart: unless-stopped
+    command: worker
+    environment:
+      PUID: 1000
+      PGID: 1000
+      AUTHENTIK_HOST: $DOMAIN
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${DB_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${DB_NAME:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${DB_PASS}
+      AUTHENTIK_SECRET_KEY: $AUTHENTIK_SECRET_KEY
+      AUTHENTIK_ERROR_REPORTING__ENABLED: ${REPORT_ERROR:-true}
+      AUTHENTIK_COOKIE_DOMAIN: $DOMAIN
+    # This is optional, and can be removed. If you remove this, the following will happen
+    # - The permissions for the /media folders aren't fixed, so make sure they are 1000:1000
+    # - The docker socket can't be accessed anymore
+    user: root
+    volumes:
+      - ./media:/media
+      - ./certs:/certs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./custom-templates:/templates
+      - geoip:/geoip
+
+    
+  whoami-test:
+    image: traefik/whoami
+    container_name: whoami-test
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik_network
+    environment:
+      TZ: Europe/Paris
+      PUID: 1000
+      PGID: 1000
+    ports:
+      - 8181:80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      ## Load balancing
+      - "traefik.http.services.whoami-test.loadBalancer.server.port=80"
+      ## HTTP Routers
+      - "traefik.http.routers.whoami-test.rule=Host(`whoami-test.$DOMAIN`)"
+      - "traefik.http.routers.whoami-test.entrypoints=web,websecure"
+      - "traefik.http.routers.whoami-test.tls=true"
+      - "traefik.http.routers.whoami-test.tls.certresolver=leresolver"
+      ## Middlewares
+      - "traefik.http.routers.whoami-test.middlewares=authentik"
+      
+volumes:
+  db_data:
+    driver: local
+  geoip:
+    driver: local
+    
+networks:
+  lan:
+  traefik_network:
+    external: true 

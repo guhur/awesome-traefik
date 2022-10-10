@@ -14,19 +14,17 @@ $ docker compose version
 Docker Compose version v2.10.2
 ```
 
-Here is a list of services I frequently use:
+Here is a list of services that can directly be launched:
 
-- [authelia](#authelia) (soon)
-- [collabora](#collabora) (soon)
-- [mailu](#mailu) (soon)
-- [mattermost](#mattermost) (soon)
+- [collabora](#collabora)
+- [freescout](#freescout)
 - [matomo](#matomo) 
 - [metabase](#metabase) 
 - [mautic](#generic)
 - [n8n](#generic)
 - [nextcloud](#nextcloud)
-- [plex](#plex) (soon)
 - [portainer](#generic)
+- [pontoon](#generic)
 - [wordpress](#generic)
 
 If you need another service, you can open an issue or contact me directly.
@@ -34,7 +32,7 @@ If you need another service, you can open an issue or contact me directly.
 
 # :beaver: Installation of Traefik
 
-Copy the `traefik/.env` file anywhere else (it could into your `/etc/` or `traefik/.env.local`). 
+Copy the `traefik/.env` file anywhere else (it could be your `/etc/` or `traefik/.env.local`). 
 
 Install Docker, and launch the container:
 

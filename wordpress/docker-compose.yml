@@ -21,6 +21,27 @@ services:
       networks:
         - lan
 
+    wordpress-cli:
+      image: wordpress:cli
+      restart: unless-stopped
+      container_name: wordpress_cli
+      volumes:
+        - ${WORDPRESS_SITE_DIR}:/var/www/html/
+      depends_on:
+        - wordpress_db
+        - wordpress
+      tty: true
+      networks:
+        - lan
+      environment:
+        WORDPRESS_DB_HOST: wordpress_db
+        WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+        WORDPRESS_DB_PASSWORD: ${DB_PASS}
+        WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+        PUID: 1000
+        PGID: 1000
+        TZ: Europe/Paris
+
     wordpress:
       image: wordpress
       restart: unless-stopped
