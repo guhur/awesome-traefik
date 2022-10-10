@@ -1,0 +1,8 @@
+http:
+  middlewares:
+    compress:
+      compress: {}
+
+    headers:
+      headers:
+        stsSeconds: 63072000

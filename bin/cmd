@@ -5,20 +5,17 @@
 function usage()
 {
    cat << HEREDOC
-   Usage: $progname --command COMMAND --service SERVICE [--env-file ENV_FILE]
+   Usage: $progname --command COMMAND --service SERVICE [--env-file ENV_FILE] [--verbose]
    optional arguments:
      -h, --help               show this help message and exit
-     -c, --command COMMAND    command name (among logs, up & down)
+     -c, --command COMMAND    command name (among logs, up, down, or custom ones)
      -s, --service SERVICE    service name (see README for a list)
-     -e, --env-file ENV_FILE  file containing service config
+     -s, --service SERVICE    service name (see README for a list)
+     --verbose                print each launched command
 HEREDOC
 
    exit 1
 }
-
-
-
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -27,10 +24,15 @@ while [[ "$#" -gt 0 ]]; do
 	-s|--service) service="$2"; shift ;; 
 	-c|--command) cmd="$2"; shift ;; 
 	-e|--env-file) envfile="$2"; shift ;; 
+	--verbose) set -x; ;; 
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
+
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+ROOT_DIR=$(readlink -f "${SCRIPT_DIR}/..")
 
 if [ -z ${service+x} ]; then
 	echo "Please provide a service"
@@ -51,20 +53,21 @@ case "$cmd" in
 esac
 
 
-echo "$SCRIPT_DIR/../$service"
-if [ ! -d "$SCRIPT_DIR/../$service" ]; then
+echo "$ROOT_DIR/$service"
+if [ ! -d "$ROOT_DIR/$service" ]; then
 	echo "Please provide a service among the file of available services"
         exit 1
 fi
 
 # Create a env-file by gathering the generic one with the one provided in command line
 tmp_envfile=$(mktemp /tmp/envfile.XXXXXX)
-default_env="$SCRIPT_DIR/../.env.local"
+default_env="$ROOT_DIR/.env.local"
 if [ ! -f $default_env ]; then
 	echo "Please copy awesome-traefik/.env in awesome-traefik/.env.local and edit the latter."
 	exit 2
 fi
 cat $default_env > $tmp_envfile
+echo "ROOT_DIR=${ROOT_DIR}" >> $tmp_envfile
 if [ ! -z ${envfile+x} ]; then 
 	if [ ! -f "$envfile" ]; then
 		echo "Can't find $envfile"
@@ -74,6 +77,6 @@ if [ ! -z ${envfile+x} ]; then
 fi
 
 
-pushd "$SCRIPT_DIR/../$service"
+pushd "$ROOT_DIR/$service"
 	docker compose --env-file $tmp_envfile $cmd
 popd

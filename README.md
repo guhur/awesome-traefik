@@ -1,7 +1,7 @@
 # List of projects compatible with Traefik 
 
 
-`Traefik` is the next generation of reverse-proxy web servers. Think of it as `nginx`, but with `docker` (+ `k8s`, and so on...).
+`Traefik` is a modern edge router. It considerably helps the installation of services. 
 
 It is ideal to easily manage your own self-hosted services.
 
@@ -132,6 +132,10 @@ docker compose --env-file /path/to/service's/env up -d
 
 If things are... more complicated... find the container name(s) (e.g. with `docker stats`) and launch `docker stop [containername]`.
 
-# :pray: Credits
+# :pray: Similar repository
 
-Inspiration of this repo comes from [lfache](https://github.com/lfache/awesome-traefik).
+- [lfache](https://github.com/lfache/awesome-traefik).
+- [tomMoulard](https://github.com/tomMoulard/make-my-server)
+
+
+

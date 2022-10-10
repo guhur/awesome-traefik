@@ -5,22 +5,63 @@ services:
     image: traefik
     container_name: traefik
     restart: unless-stopped
+    command:
+      # Provider
+      - '--providers.docker'
+      - '--providers.docker.exposedbydefault=${TRAEFIK_EXPOSED_BY_DEFAULT:-false}'
+      - '--providers.docker.network=traefik_network'
+      # Entrypoints
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
+      - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+      - '--entrypoints.websecure.address=:443'
+      - '--entrypoints.imaps.address=:993'
+      - '--entrypoints.smtps.address=:465'
+      # Let's Encrypt
+      - '--certificatesresolvers.leresolver.acme.email=${EMAIL}'
+      - '--certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=web'
+      - '--certificatesresolvers.leresolver.acme.httpchallenge=true'
+      - '--certificatesresolvers.leresolver.acme.storage=/data/acme.json'
+      - '--entrypoints.websecure.http.tls.certresolver=leresolver'
+      # Logs
+      - '--accesslog.filepath=/data/log/access.log'
+      - '--accesslog.format=json'
+      - '--log.filepath=/data/log/traefik.log'
+      - '--log.format=json'
+      - '--log.level=${TRAEFIK_LOG_LEVEL:-DEBUG}'
+      - '--metrics.prometheus'
+      # Misc
+      - '--api.dashboard'
+      - '--entrypoints.websecure.http.middlewares=compress@file,headers@file${TRAEFIK_PLUGINS:-}'
+      - '--experimental.plugins.fail2ban.modulename=github.com/tommoulard/fail2ban'
+      - '--experimental.plugins.fail2ban.version=v0.6.0'
+      - '--global.checknewversion=${TRAEFIK_CHECK_NEW_VERSION:-false}'
+      - '--global.sendanonymoususage=${TRAEFIK_SEND_ANONYMOUS_USAGE:-false}'
+      - '--pilot.token=${TRAEFIK_PILOT_TOKEN:-}'
+      - '--ping'
+      - '--providers.file.directory=/dynamic_conf'
+      - '--providers.file.watch=true'
     ports:
       - "80:80"
       - "443:443"
-      - "143:443"
+      - "143:143"
+      - "465:465"
     environment:
       - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
       - PUID=$PUID
       - PGID=$PGID
       - TZ=$TIMEZONE
+        # healthcheck:
+        #   test: ['CMD', 'traefik', 'healthcheck', '--ping']
+        #   interval: 10s
+        #   timeout: 10s
+        #   retries: 5
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - ${DATA_DIR}:/etc/traefik
-      - ${CONFIG}:/etc/traefik/traefik.yaml
+      - ${ROOT_DIR}/traefik/dynamic_conf/:/dynamic_conf
+      - ${DATA_DIR}:/data
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik_network"
       - "traefik.http.middlewares.auth.basicauth.users=${USER}:${PASSWORD_HASH}"
       # Routing of the dashboard
       - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
@@ -28,7 +69,6 @@ services:
       - "traefik.http.routers.dashboard.middlewares=auth"
       - "traefik.http.routers.dashboard.tls=true"
       - "traefik.http.routers.dashboard.tls.certresolver=leresolver"
-      - "traefik.certifcatesResolvers.leresolver.acme.email=${EMAIL}"
     networks:
       - traefik-network
     restart: unless-stopped
