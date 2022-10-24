@@ -10,19 +10,18 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=${DB_NAME:-mautic}
       - MYSQL_USER=${DB_USER:-mautic}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_PASSWORD=${DB_PASS}
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Paris
     networks:
       - lan
     volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - lan
+      - db_data3:/var/lib/mysql
 
   mautic:
     image: mautic/mautic:latest
+    restart: unless-stopped
     container_name: mautic
     links:
       - mautic_db:mysql
@@ -31,12 +30,12 @@ services:
         # ports:
         #   - ${MAUTIC_PORT:-8080}:80
     volumes:
-      - mautic_data:/var/www/html
+      - mautic_data3:/var/www/html
     environment:
       - MAUTIC_DB_HOST=mautic_db
       - MYSQL_PORT_3306_TCP=3306
       - MAUTIC_DB_USER=${DB_USER:-mautic}
-      - MAUTIC_DB_PASSWORD=$DB_PASSWORD
+      - MAUTIC_DB_PASSWORD=$DB_PASS
       - MAUTIC_DB_NAME=${DB_NAME:-mautic}
       - MAUTIC_RUN_CRON_JOBS=true
     networks:
@@ -46,15 +45,15 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
       - "traefik.http.routers.mautic.entrypoints=web,websecure"
-      - "traefik.http.routers.mautic.rule=Host(`${MAUTIC_URL}`)"
+      - "traefik.http.routers.mautic.rule=Host(`${MAUTIC_PREFIX:-mautic}.${DOMAIN}`)"
       - "traefik.http.services.mautic.loadbalancer.server.port=80"
       - "traefik.http.routers.mautic.tls=true"
       - "traefik.http.routers.mautic.tls.certresolver=leresolver"
 
 volumes:
-  db_data:
+  db_data3:
     driver: local
-  mautic_data:
+  mautic_data3:
     driver: local
 
 networks:

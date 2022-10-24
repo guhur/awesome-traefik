@@ -47,22 +47,22 @@ services:
       - "143:143"
       - "465:465"
     environment:
-      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN:-}
       - PUID=$PUID
       - PGID=$PGID
       - TZ=$TIMEZONE
-        # healthcheck:
-        #   test: ['CMD', 'traefik', 'healthcheck', '--ping']
-        #   interval: 10s
-        #   timeout: 10s
-        #   retries: 5
+    healthcheck:
+      test: ['CMD', 'traefik', 'healthcheck', '--ping']
+      interval: 10s
+      timeout: 10s
+      retries: 5
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - ${ROOT_DIR}/traefik/dynamic_conf/:/dynamic_conf
       - ${DATA_DIR}:/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.middlewares.auth.basicauth.users=${USER}:${PASSWORD_HASH}"
+      - "traefik.http.middlewares.auth.basicauth.users=${AUTH_HASH}"
       # Routing of the dashboard
       - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
       - "traefik.http.routers.dashboard.service=api@internal"
