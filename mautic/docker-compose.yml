@@ -17,9 +17,7 @@ services:
     networks:
       - lan
     volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - lan
+      - db_data3:/var/lib/mysql
 
   mautic:
     image: mautic/mautic:latest
@@ -32,7 +30,7 @@ services:
         # ports:
         #   - ${MAUTIC_PORT:-8080}:80
     volumes:
-      - mautic_data:/var/www/html
+      - mautic_data3:/var/www/html
     environment:
       - MAUTIC_DB_HOST=mautic_db
       - MYSQL_PORT_3306_TCP=3306
@@ -53,9 +51,9 @@ services:
       - "traefik.http.routers.mautic.tls.certresolver=leresolver"
 
 volumes:
-  db_data:
+  db_data3:
     driver: local
-  mautic_data:
+  mautic_data3:
     driver: local
 
 networks:

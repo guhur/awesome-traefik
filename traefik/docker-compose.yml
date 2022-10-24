@@ -47,15 +47,15 @@ services:
       - "143:143"
       - "465:465"
     environment:
-      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN:-}
       - PUID=$PUID
       - PGID=$PGID
       - TZ=$TIMEZONE
-        # healthcheck:
-        #   test: ['CMD', 'traefik', 'healthcheck', '--ping']
-        #   interval: 10s
-        #   timeout: 10s
-        #   retries: 5
+    healthcheck:
+      test: ['CMD', 'traefik', 'healthcheck', '--ping']
+      interval: 10s
+      timeout: 10s
+      retries: 5
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - ${ROOT_DIR}/traefik/dynamic_conf/:/dynamic_conf
