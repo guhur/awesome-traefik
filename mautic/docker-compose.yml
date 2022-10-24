@@ -10,7 +10,7 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=${DB_NAME:-mautic}
       - MYSQL_USER=${DB_USER:-mautic}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_PASSWORD=${DB_PASS}
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Paris
@@ -46,7 +46,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
       - "traefik.http.routers.mautic.entrypoints=web,websecure"
-      - "traefik.http.routers.mautic.rule=Host(`${MAUTIC_URL}`)"
+      - "traefik.http.routers.mautic.rule=Host(`${MAUTIC_PREFIX:-mautic}.${DOMAIN}`)"
       - "traefik.http.services.mautic.loadbalancer.server.port=80"
       - "traefik.http.routers.mautic.tls=true"
       - "traefik.http.routers.mautic.tls.certresolver=leresolver"
