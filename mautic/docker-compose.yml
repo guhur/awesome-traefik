@@ -23,6 +23,7 @@ services:
 
   mautic:
     image: mautic/mautic:latest
+    restart: unless-stopped
     container_name: mautic
     links:
       - mautic_db:mysql
@@ -36,7 +37,7 @@ services:
       - MAUTIC_DB_HOST=mautic_db
       - MYSQL_PORT_3306_TCP=3306
       - MAUTIC_DB_USER=${DB_USER:-mautic}
-      - MAUTIC_DB_PASSWORD=$DB_PASSWORD
+      - MAUTIC_DB_PASSWORD=$DB_PASS
       - MAUTIC_DB_NAME=${DB_NAME:-mautic}
       - MAUTIC_RUN_CRON_JOBS=true
     networks:
