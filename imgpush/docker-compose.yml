@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   imgpush:
-    image: imgpush
+    image: hauxir/imgpush:latest
     container_name: imgpush
     restart: unless-stopped
     environment:
@@ -9,6 +9,17 @@ services:
       PGID: $PUID
       TZ: $TIMEZONE
       IMAGES_DIR: /images
+      MAX_SIZE_MB: 16
+      MAX_UPLOADS_PER_DAY: 100
+      MAX_UPLOADS_PER_HOUR: 100
+      MAX_UPLOADS_PER_MINUTE: 10
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-"['*']"}
+      VALID_SIZES: ${VALID_SIZES:-"[100,200,300]"}
+      NAME_STRATEGY: "uuidv4"
+    healthcheck:
+      start_period: 0s
+      test: ['CMD-SHELL', 'curl localhost:5000/liveness -s -f -o /dev/null || exit 1']
+      interval: 30s
     networks:
       - lan
       - traefik_network
@@ -19,7 +30,7 @@ services:
       - "traefik.docker.network=traefik_network"
       - "traefik.http.routers.imgpush.entrypoints=web,websecure"
       - "traefik.http.routers.imgpush.rule=Host(`${IMGPUSH_PREFIX:-imgpush}.${DOMAIN}`)"
-      - "traefik.http.services.imgpush.loadbalancer.server.port=80"
+      - "traefik.http.services.imgpush.loadbalancer.server.port=5000"
       - "traefik.http.routers.imgpush.tls=true"
       - "traefik.http.routers.imgpush.tls.certresolver=leresolver"
 
@@ -29,7 +40,7 @@ services:
     image: restic
     container_name: imgpush_restic
     build:
-      context: ./restic
+      context: ../restic
       dockerfile: Dockerfile
       args:
         RESTIC_INIT_ARGS: $RESTIC_INIT_ARGS
@@ -46,7 +57,7 @@ services:
       - RESTIC_FORGET_ARGS=--prune --keep-last 1 --keep-daily 1
       - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-      - MAILX_ARGS=-r '${RESTIC_SEND_MAIL}' -s 'Backing up imgpush' -S smtp='${SMTP_HOST}:${SMTP_PORT}' -S smtp-use-starttls -S smtp-auth=login -S smtp-auth-user='${SMTP_USER}' -S smtp-auth-password='${SMTP_PASSWORD}' '${RESTIC_DEST_MAIL}'
+      - MAILX_ARGS=-r '${RESTIC_SEND_MAIL}' -s 'Backing up imgpush' -S smtp='${SMTP_HOST}:${SMTP_PORT:-587}' -S smtp-use-starttls -S smtp-auth=login -S smtp-auth-user='${SMTP_USER}' -S smtp-auth-password='${SMTP_PASS}' '${RESTIC_DEST_MAIL}'
 
 volumes:
   db:
