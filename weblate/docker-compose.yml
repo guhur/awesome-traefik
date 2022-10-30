@@ -1,0 +1,119 @@
+# This file is derived from 
+# https://github.com/WeblateOrg/docker-compose/blob/main/docker-compose.yml
+version: '3'
+services:
+  weblate:
+    image: weblate/weblate
+    tmpfs:
+    - /app/cache
+    volumes:
+    - weblate-data:/app/data
+    environment:
+      WEBLATE_DEBUG: ${WEBLATE_DEBUG:-1}
+      WEBLATE_LOGLEVEL: ${WEBLATE_LOGLEVEL:-DEBUG}
+      WEBLATE_SITE_DOMAIN: ${DOMAIN}
+      WEBLATE_SITE_TITLE:  ${WEBLATE_SITE_TITLE:-Weblate}
+      WEBLATE_ADMIN_NAME: ${WEBLATE_ADMIN_NAME:-Weblate Admin}
+      WEBLATE_ADMIN_EMAIL: ${WEBLATE_ADMIN_EMAIL:-weblate@example.com}
+      WEBLATE_ADMIN_PASSWORD: ${WEBLATE_ADMIN_PASSWORD}
+      WEBLATE_SERVER_EMAIL: ${WEBLATE_SERVER_EMAIL:-weblate@example.com}
+      WEBLATE_DEFAULT_FROM_EMAIL: ${WEBLATE_DEFAULT_FROM_EMAIL:-weblate@example.com}
+      WEBLATE_ALLOWED_HOSTS: ${WEBLATE_ALLOWED_HOSTS:-*}
+      WEBLATE_REGISTRATION_OPEN: ${WEBLATE_REGISTRATION_OPEN:-1}
+      WEBLATE_TIME_ZONE: $TIMEZONE
+
+      # Extra
+      #WEBLATE_MT_GOOGLE_KEY=
+      #WEBLATE_MT_GOOGLE_CREDENTIALS=
+      #WEBLATE_MT_GOOGLE_PROJECT=
+      #WEBLATE_MT_GOOGLE_LOCATION=
+      #WEBLATE_SOCIAL_AUTH_GITHUB_KEY=
+      #WEBLATE_SOCIAL_AUTH_GITHUB_SECRET=
+      #WEBLATE_SOCIAL_AUTH_BITBUCKET_KEY=
+      #WEBLATE_SOCIAL_AUTH_BITBUCKET_SECRET=
+      #WEBLATE_SOCIAL_AUTH_FACEBOOK_KEY=
+      #WEBLATE_SOCIAL_AUTH_FACEBOOK_SECRET=
+      #WEBLATE_SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=
+      #WEBLATE_SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=
+
+      #WEBLATE_OFFLOAD_INDEXING=1
+      #WEBLATE_GOOGLE_ANALYTICS_ID=
+      #WEBLATE_ENABLE_HTTPS=1
+      #WEBLATE_IP_PROXY_HEADER=HTTP_X_FORWARDED_FOR
+      #WEBLATE_REQUIRE_LOGIN=1
+
+      # LDAP Auth
+      #WEBLATE_AUTH_LDAP_SERVER_URI=ldap://ldap.example.org
+      #WEBLATE_AUTH_LDAP_USER_DN_TEMPLATE=uid=%(user)s,ou=People,dc=example,dc=net
+      #WEBLATE_AUTH_LDAP_USER_ATTR_MAP=first_name:name,email:mail
+
+      # PostgreSQL setup
+      POSTGRES_PASSWORD: $DB_PASS
+      POSTGRES_USER: ${DB_USER:-weblate}
+      POSTGRES_DATABASE: ${DB_NAME:-weblate}
+      POSTGRES_HOST: weblate_db
+      POSTGRES_PORT: 5432 
+
+      # Cache setup
+      # https://docs.weblate.org/en/latest/admin/install.html#production-cache
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
+
+      # Mail server, the server has to listen on port 587 and understand TLS
+      WEBLATE_EMAIL_HOST: ${SMTP_HOST}
+      # Do NOT use quotes here
+      WEBLATE_EMAIL_HOST_USER: ${SMTP_USER}
+      # Do NOT use quotes here
+      WEBLATE_EMAIL_HOST_PASSWORD: ${SMTP_PASS}
+
+      # GitLab lab setup
+      # WEBLATE_GITLAB_USERNAME=
+      # WEBLATE_GITLAB_HOST=
+      # WEBLATE_GITLAB_TOKEN=
+    restart: unless-stopped
+    depends_on:
+    - weblate_db
+    - cache
+    networks:
+      - traefik_network
+      - lan
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.weblate.entrypoints=web,websecure"
+      - "traefik.http.routers.weblate.rule=Host(`${WEBLATE_PREFIX:-weblate}.${DOMAIN}`)"
+      - "traefik.http.services.weblate.loadbalancer.server.port=8080"
+      - "traefik.http.routers.weblate.tls=true"
+      - "traefik.http.routers.weblate.tls.certresolver=leresolver"
+
+  weblate_db:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_PASSWORD: $DB_PASS
+      POSTGRES_USER: ${DB_USER:-weblate}
+      POSTGRES_DATABASE: ${DB_NAME:-weblate}
+      POSTGRES_HOST: weblate_db
+      POSTGRES_PORT: 5432 
+    volumes:
+    - postgres-data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - lan
+  cache:
+    image: redis:6-alpine
+    restart: always
+    command: [redis-server, --save, '60', '1']
+    volumes:
+    - redis-data:/data
+    networks:
+      - lan
+
+volumes:
+  weblate-data: {}
+  postgres-data: {}
+  redis-data: {}
+
+networks:
+  lan:
+  traefik_network:
+    external: true 
