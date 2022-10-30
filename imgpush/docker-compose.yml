@@ -1,0 +1,58 @@
+version: '3.7'
+services:
+  imgpush:
+    image: imgpush
+    container_name: imgpush
+    restart: unless-stopped
+    environment:
+      PUID: $PUID
+      PGID: $PUID
+      TZ: $TIMEZONE
+      IMAGES_DIR: /images
+    networks:
+      - lan
+      - traefik_network
+    volumes:
+      - ${DATA_DIR}:/images
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.imgpush.entrypoints=web,websecure"
+      - "traefik.http.routers.imgpush.rule=Host(`${IMGPUSH_PREFIX:-imgpush}.${DOMAIN}`)"
+      - "traefik.http.services.imgpush.loadbalancer.server.port=80"
+      - "traefik.http.routers.imgpush.tls=true"
+      - "traefik.http.routers.imgpush.tls.certresolver=leresolver"
+
+  restic:
+    depends_on:
+      - imgpush
+    image: restic
+    container_name: imgpush_restic
+    build:
+      context: ./restic
+      dockerfile: Dockerfile
+      args:
+        RESTIC_INIT_ARGS: $RESTIC_INIT_ARGS
+        RESTIC_PASSWORD: $RESTIC_PASSWORD
+    restart: unless-stopped
+    volumes:
+      - ${DATA_DIR}:/data
+    environment:
+      - PUID=$PUID
+      - PGID=$PUID
+      - TZ=$TIMEZONE
+      - RESTIC_REPOSITORY=$RESTIC_REPOSITORY
+      - BACKUP_CRON=${RESTIC_BACKUP_CRON:-0 0 * * *}
+      - RESTIC_FORGET_ARGS=--prune --keep-last 1 --keep-daily 1
+      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - MAILX_ARGS=-r '${RESTIC_SEND_MAIL}' -s 'Backing up imgpush' -S smtp='${SMTP_HOST}:${SMTP_PORT}' -S smtp-use-starttls -S smtp-auth=login -S smtp-auth-user='${SMTP_USER}' -S smtp-auth-password='${SMTP_PASSWORD}' '${RESTIC_DEST_MAIL}'
+
+volumes:
+  db:
+  html:
+
+networks:
+  lan:
+  traefik_network:
+    external: true 
