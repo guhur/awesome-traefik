@@ -46,7 +46,7 @@ if [ -z ${cmd+x} ]; then
         exit 1
 fi
 case "$cmd" in
-    boot) cmd="boot -d --force-recreate --build";;
+    boot) cmd="up -d --force-recreate --build";;
     log) cmd="logs -f";;
     *) cmd="$cmd"
 esac
