@@ -56,7 +56,7 @@ services:
     image: restic
     container_name: nextcloud_restic
     build:
-      context: ./restic
+      context: ../restic
       dockerfile: Dockerfile
       args:
         RESTIC_INIT_ARGS: $RESTIC_INIT_ARGS
@@ -73,7 +73,7 @@ services:
       - RESTIC_FORGET_ARGS=--prune --keep-last 1 --keep-daily 1
       - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-      - MAILX_ARGS=-r '${RESTIC_SEND_MAIL}' -s 'Result of the last restic backup run' -S smtp='${SMTP_HOST}:${SMTP_PORT}' -S smtp-use-starttls -S smtp-auth=login -S smtp-auth-user='${SMTP_USER}' -S smtp-auth-password='${SMTP_PASSWORD}' '${RESTIC_DEST_MAIL}'
+      - MAILX_ARGS=-r '${RESTIC_SEND_MAIL}' -s 'Result of the last restic backup run' -S smtp='${SMTP_HOST}:${SMTP_PORT;-587}' -S smtp-use-starttls -S smtp-auth=login -S smtp-auth-user='${SMTP_USER}' -S smtp-auth-password='${SMTP_PASS}' '${RESTIC_DEST_MAIL}'
 
 volumes:
   db:

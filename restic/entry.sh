@@ -1,7 +1,6 @@
 #!bin/sh
 
 echo "Starting container ..."
-echo 'FOOOO'
 echo $RESTIC_INIT_ARGS
 echo $RESTIC_PASSWORD
 
