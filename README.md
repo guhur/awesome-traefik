@@ -16,44 +16,43 @@ Docker Compose version v2.10.2
 
 Here is a list of services that can directly be launched:
 
-- [collabora](#collabora)
-- [freescout](#freescout)
-- [matomo](#matomo) 
-- [metabase](#metabase) 
-- [mautic](#generic)
-- [n8n](#generic)
-- [nextcloud](#nextcloud)
-- [portainer](#generic)
-- [pontoon](#generic)
-- [wordpress](#generic)
+- [collabora](#collabora) is an online version of LibreOffice
+- [freescout](#freescout) is a help-desk
+- [matomo](#matomo) is a web-analytics tool
+- [metabase](#metabase) is a business intelligence tool
+- [mautic](#generic) is a mailing management system
+- [n8n](#generic) is an automatization platform
+- [nextcloud](#nextcloud) is a file-hosting service
+- [portainer](#generic) is a tool for Docker
+- [weblate](#generic) is a translation management system 
+- [wordpress](#generic) is the most famous content management system
 
-If you need another service, you can open an issue or contact me directly.
+If you need another service, you can open an issue or contact me directly on Linkedin.
 
 
-# :beaver: Installation of Traefik
+# :beaver: Global installation: configuration and Traefik
+
+Copy the `.env` in `.env.local` and edit the latter with your own configuration.
 
 Copy the `traefik/.env` file anywhere else (it could be your `/etc/` or `traefik/.env.local`). 
 
-Install Docker, and launch the container:
+Launch it with:
 
 ```bash
-cd traefik
-docker compose --env-file /path/to/your/env up -d 
+bin/cmd -c boot -s traefik -e /path/to/your/env 
 ```
 
 # :bug: Debugging 
 
-I personally found that installing self-hosting services is much less harassing than with `nginx`.
-However, I can sometimes spend half-a-day installing a new service. Sometimes, an update might cause an issue with my install. 
-
-Here is my troubleshooting quick-list:
+Because `traefik` is nicely integrated with Docker, installation and maintenance have been much easier than with `nginx`.
+However, I can sometimes spend half-a-day installing a new service, and I found it useful to gather a check-list for troubleshooting:
 
 1. Does the service appear in `docker stats`? If not, you haven't been able to start it. Check errors during the building of your container.
 
 1. Does the service quickly die and restart in `docker stats`? It means that the service has an issue. Go the service folder, and look at the docker logs with: 
 
 ```bash
-docker compose --env-file /path/to/your/env logs -f
+bin/cmd -s log -s [service] -e /path/to/your/env
 ```
 
 1. Is the service unresponding? It might be a wrong configuration. Add a port forwarding in the `docker-compose.yaml` and see if you can use the service locally. For example, in `collobora/docker-compose.yml`, add:
@@ -67,6 +66,7 @@ Restart the container and visit: `http://localhost:9980`. You should obtain a "O
 
 1. Is it still not working? Start an interactive session with `docker exec -it [name-of-the-container] sh` 
 
+
 # Installing services
 
 ## Generic
@@ -78,8 +78,7 @@ Copy the `service/.env` file anywhere else (it could into your `/etc/` or `servi
 Then, launch the container:
 
 ```bash
-cd service
-docker compose --env-file /path/to/your/env up -d 
+bin/cmd -c boot --env-file /path/to/your/env
 ```
 
 ## Nextcloud
@@ -116,8 +115,7 @@ Similarly, copy `pontoon/.env` as `pontoon/.env.local` and edit it. Add the same
 Launch the container:
 
 ```bash
-cd pontoon
-docker compose --env-file pontoon/.env up -d 
+bin/cmd -c boot -s pontoon -e pontoon/.env
 ```
 
 
@@ -126,16 +124,13 @@ docker compose --env-file pontoon/.env up -d
 If you still have access to your `.env` file:
 
 ```bash
-cd service
-docker compose --env-file /path/to/service's/env up -d 
+bin/cmd -c down -s [service] -e /path/to/service's/.env
 ```
 
-If things are... more complicated... find the container name(s) (e.g. with `docker stats`) and launch `docker stop [containername]`.
+Otherwise, you might not be able to use docker compose, and you need hence to stop containers one by one: (i) find the container name(s) (e.g. with `docker stats`), and (ii) launch `docker stop [containername]`.
 
 # :pray: Similar repository
 
 - [lfache](https://github.com/lfache/awesome-traefik).
 - [tomMoulard](https://github.com/tomMoulard/make-my-server)
-
-
 

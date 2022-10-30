@@ -8,7 +8,7 @@ function usage()
    Usage: $progname --command COMMAND --service SERVICE [--env-file ENV_FILE] [--verbose]
    optional arguments:
      -h, --help               show this help message and exit
-     -c, --command COMMAND    command name (among logs, up, down, or custom ones)
+     -c, --command COMMAND    command name (among log, boot, or any command from docker compose)
      -s, --service SERVICE    service name (see README for a list)
      -s, --service SERVICE    service name (see README for a list)
      --verbose                print each launched command
@@ -46,9 +46,8 @@ if [ -z ${cmd+x} ]; then
         exit 1
 fi
 case "$cmd" in
-    up) cmd="up -d --force-recreate --build";;
-    logs) cmd="logs -f";;
-    down) cmd="down";;
+    boot) cmd="boot -d --force-recreate --build";;
+    log) cmd="logs -f";;
     *) cmd="$cmd"
 esac
 

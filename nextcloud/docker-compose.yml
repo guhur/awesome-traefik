@@ -7,9 +7,9 @@ services:
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
-      - MYSQL_DATABASE=${NEXTCLOUD_MYSQL_DATABASE}
-      - MYSQL_USER=${NEXTCLOUD_MYSQL_USER}
-      - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME:-nextcloud}
+      - MYSQL_USER=${DB_USER:-nextcloud}
+      - MYSQL_PASSWORD=${DB_PASS}
       - PUID=$PUID
       - PGID=$PUID
       - TZ=$TIMEZONE
@@ -26,10 +26,10 @@ services:
     restart: unless-stopped
     environment:
       - MYSQL_HOST=database
-      - MYSQL_DATABASE=${NEXTCLOUD_MYSQL_DATABASE}
-      - MYSQL_USER=${NEXTCLOUD_MYSQL_USER}
-      - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PASSWORD}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_URL}
+      - MYSQL_DATABASE=${DB_NAME:-nextcloud}
+      - MYSQL_USER=${DB_USER:-nextcloud}
+      - MYSQL_PASSWORD=${DB_PASS}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_PREFIX:-nextcloud}.${DOMAIN}
       - PUID=$PUID
       - PGID=$PUID
       - TZ=$TIMEZONE
@@ -42,7 +42,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
       - "traefik.http.routers.nextcloud.entrypoints=web,websecure"
-      - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_URL}`)"
+      - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_PREFIX:-nextcloud}.${DOMAIN}`)"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
       - "traefik.http.routers.nextcloud.tls=true"
       - "traefik.http.routers.nextcloud.tls.certresolver=leresolver"
@@ -63,17 +63,17 @@ services:
         RESTIC_PASSWORD: $RESTIC_PASSWORD
     restart: unless-stopped
     volumes:
-      - ${NEXTCLOUD_DATA_DIR}/data:/data
+      - ${DATA_DIR}/data:/data
     environment:
       - PUID=$PUID
       - PGID=$PUID
       - TZ=$TIMEZONE
       - RESTIC_REPOSITORY=$RESTIC_REPOSITORY
-      - BACKUP_CRON=${RESTIC_BACKUP_CRON:-0 */6 * * *}
+      - BACKUP_CRON=${RESTIC_BACKUP_CRON:-0 */12 * * *}
       - RESTIC_FORGET_ARGS=--prune --keep-last 1 --keep-daily 1
       - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-      - MAILX_ARGS=-r '${RESTIC_SEND_MAIL}' -s 'Result of the last restic backup run' -S smtp='${NEXTCLOUD_SMTP_HOST}:${NEXTCLOUD_SMTP_PORT}' -S smtp-use-starttls -S smtp-auth=login -S smtp-auth-user='${NEXTCLOUD_SMTP_NAME}' -S smtp-auth-password='${NEXTCLOUD_SMTP_PASSWORD}' '${RESTIC_DEST_MAIL}'
+      - MAILX_ARGS=-r '${RESTIC_SEND_MAIL}' -s 'Result of the last restic backup run' -S smtp='${SMTP_HOST}:${SMTP_PORT}' -S smtp-use-starttls -S smtp-auth=login -S smtp-auth-user='${SMTP_USER}' -S smtp-auth-password='${SMTP_PASSWORD}' '${RESTIC_DEST_MAIL}'
 
 volumes:
   db:
