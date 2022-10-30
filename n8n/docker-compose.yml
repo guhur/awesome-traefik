@@ -1,4 +1,4 @@
-version: '2'
+version: '3.8'
 
 services:
   postgres:
@@ -6,9 +6,9 @@ services:
     container_name: n8n_db
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=$N8N_DB_USER
-      - POSTGRES_PASSWORD=$N8N_DB_PASSWORD
-      - POSTGRES_DB=$N8N_DB_DATABASE
+      - POSTGRES_USER=${DB_USER:-n8n}
+      - POSTGRES_PASSWORD=$DB_PASS
+      - POSTGRES_DB=${DB_NAME:-n8n}
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Paris
@@ -29,32 +29,31 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Paris
-      - WEBHOOK_URL=$N8N_WEBHOOK_URL
-      - DB_TYPE=$N8N_DB_TYPE
-      - DB_POSTGRESDB_PORT=$N8N_DB_PORT
-      - DB_POSTGRESDB_DATABASE=$N8N_DB_DATABASE
+      - WEBHOOK_URL=https://${N8N_PREFIX:-n8n}.${DOMAIN}
+      - DB_TYPE=${DB_TYPE:-postgresdb}
+      - DB_POSTGRESDB_PORT=${DB_PORT:-5432}
+      - DB_POSTGRESDB_DATABASE=${DB_NAME:-n8n}
       - DB_POSTGRESDB_HOST=n8n_db
-      - DB_POSTGRESDB_USER=$N8N_DB_USER
-      - DB_POSTGRESDB_PASSWORD=$N8N_DB_PASSWORD
+      - DB_POSTGRESDB_USER=${DB_USER:-n8n}
+      - DB_POSTGRESDB_PASSWORD=$DB_PASS
     volumes:
-      - ${N8N_VOLUME}:/home/node/.n8n
+      - ${VOLUME}:/home/node/.n8n
     networks:
-      - n8n-net
+      - traefik_network
       - lan
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
       - "traefik.http.routers.n8n.entrypoints=web,websecure"
-      - "traefik.http.routers.n8n.rule=Host(`n8n.${N8N_DOMAIN}`)"
+      - "traefik.http.routers.n8n.rule=Host(`${N8N_PREFIX:-n8n}.${DOMAIN}`)"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
       - "traefik.http.routers.n8n.tls=true"
       - "traefik.http.routers.n8n.tls.certresolver=leresolver"
 
 networks:
-  lan: {}
-  n8n-net:
-    external: true
-    name: traefik_network
+  lan:
+  traefik_network:
+    external: true 
 
 volumes:
   db:
