@@ -118,6 +118,14 @@ Launch the container:
 bin/cmd -c boot -s pontoon -e pontoon/.env
 ```
 
+## Crater
+
+```bash
+cd crater
+cp .env.example .env
+docker-compose up -d
+./docker-compose/setup.sh
+```
 
 # Stopping a service
 

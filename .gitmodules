@@ -4,3 +4,6 @@
 [submodule "moodle/moodle-docker"]
 	path = moodle/moodle-docker
 	url = https://github.com/guhur/moodle-docker.git
+[submodule "crater/crater"]
+	path = crater/crater
+	url = https://github.com/guhur/crater

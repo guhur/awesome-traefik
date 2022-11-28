@@ -1,0 +1,73 @@
+version: '3.7'
+services:
+  database:
+    image: mariadb
+    container_name: crater_db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+        MYSQL_USER: crater
+        MYSQL_PASSWORD: crater
+        MYSQL_DATABASE: crater
+        MYSQL_ROOT_PASSWORD: crater
+        PUID: $PUID
+        PGID: $PUID
+        TZ: $TIMEZONE
+    networks:
+      - lan
+    volumes:
+      - db:/var/lib/mysql
+
+  crater:
+    build:
+      args:
+        user: crater-user
+        uid: 1000
+      context: ./crater
+      dockerfile: Dockerfile
+    hostname: crater_app
+    depends_on:
+      - database
+    image: crater-php
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./crater:/var/www
+      - ./crater/docker-compose/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:rw,delegated
+    networks:
+      - lan
+  
+  nginx:
+    image: nginx:1.17-alpine
+    restart: unless-stopped
+    volumes:
+      - ./crater/:/var/www
+      - ./crater/docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - lan
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.crater.entrypoints=web,websecure"
+      - "traefik.http.routers.crater.rule=Host(`${CRATER_PREFIX:-crater}.${DOMAIN}`)"
+      - "traefik.http.services.crater.loadbalancer.server.port=80"
+      - "traefik.http.routers.crater.tls=true"
+      - "traefik.http.routers.crater.tls.certresolver=leresolver"
+
+  cron:
+    build:
+      context: ./crater/
+      dockerfile: ./docker-compose/cron.dockerfile
+    volumes:
+      - ./crater/:/var/www
+    networks:
+      - lan
+
+volumes:
+  db:
+
+networks:
+  lan:
+  traefik_network:
+    external: true 
