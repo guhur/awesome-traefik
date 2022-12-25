@@ -56,8 +56,13 @@ services:
         PUID: 1000
         PGID: 1000
         TZ: Europe/Paris
+        WORDPRESS_DEBUG: 1
+        WORDPRESS_MEMORY_LIMIT: 256MB
+
       volumes:
         - ${WORDPRESS_SITE_DIR}:/var/www/html/
+        - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini # create custom uploads.ini which has an increased upload file size limit, memory etc.
+
       networks:
         - lan
         - traefik_network
@@ -67,7 +72,7 @@ services:
         - "traefik.enable=true"
         - "traefik.docker.network=traefik_network"
         - "traefik.http.routers.wordpress.entrypoints=web,websecure"
-        - "traefik.http.routers.wordpress.rule=Host(`${WORDPRESS_URL}`)"
+        - "traefik.http.routers.wordpress.rule=Host(`${WORDPRESS_PREFIX:-wordpress}.${DOMAIN}`)"
         - "traefik.http.services.wordpress.loadbalancer.server.port=80"
         - "traefik.http.routers.wordpress.tls=true"
         - "traefik.http.routers.wordpress.tls.certresolver=leresolver"
