@@ -1,0 +1,34 @@
+# This file allows to serve static files store in STATIC_DIR
+version: '3.8'
+
+services:
+  web:
+    image: nginx:latest
+    volumes:
+      - ${STATIC_DIR:-./static}:/usr/share/nginx/html
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      timeout: 5s
+      retries: 3
+      interval: 5s
+    environment:
+      PUID: 1000
+      PGID: 1000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      ## Load balancing
+      - "traefik.http.services.nginx.loadBalancer.server.port=80"
+      ## HTTP Routers
+      - "traefik.http.routers.nginx.rule=Host(`nginx.$DOMAIN`)"
+      - "traefik.http.routers.nginx.entrypoints=web,websecure"
+      - "traefik.http.routers.nginx.tls=true"
+      - "traefik.http.routers.nginx.tls.certresolver=leresolver"
+    networks:
+      - traefik_network
+
+networks:
+  traefik_network:
+    external: true
+

@@ -22,6 +22,7 @@ Here is a list of services that can directly be launched:
 - [metabase](#metabase) is a business intelligence tool
 - [mautic](#generic) is a mailing management system
 - [n8n](#generic) is an automatization platform
+- [nginx](#generic) is used for static file delivery
 - [nextcloud](#nextcloud) is a file-hosting service
 - [portainer](#generic) is a tool for Docker
 - [weblate](#generic) is a translation management system 
