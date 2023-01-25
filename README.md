@@ -24,6 +24,7 @@ Here is a list of services that can directly be launched:
 - [n8n](#generic) is an automatization platform
 - [nginx](#generic) is used for static file delivery
 - [nextcloud](#nextcloud) is a file-hosting service
+- [nocodb](#nocodb) is a no-code database alternative to Airtable
 - [portainer](#generic) is a tool for Docker
 - [weblate](#generic) is a translation management system 
 - [wordpress](#generic) is the most famous content management system

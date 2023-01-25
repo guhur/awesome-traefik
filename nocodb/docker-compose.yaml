@@ -1,0 +1,67 @@
+version: "3.9"
+
+services: 
+  nocodb: 
+    container_name: nocodb
+    depends_on: 
+      - nocodb-db
+    environment: 
+      - "NC_DB=pg://nocodb-db:5432?u=${DB_USER:-nocodb}&p=${DB_PASS}&d=${DB_NAME:-nocodb}"
+      - "NC_PUBLIC_URL=https://${NOCODB_PREFIX:-nocodb}.${DOMAIN}"
+      - NC_DISABLE_TELE=true
+    image: "nocodb/nocodb:latest"
+    healthcheck: 
+      interval: 30s
+      retries: 3
+      start_period: 30s
+      test: 
+        - CMD
+        - wget
+        - --tries=1
+        - --spider
+        - http://localhost:8080/dashboard
+      timeout: 10s
+    labels: 
+      - traefik.enable=true
+      - traefik.docker.network=traefik_network
+      - traefik.http.services.nocodb.loadbalancer.server.port=8080
+      - "traefik.http.routers.nocodb.rule=Host(`${NOCODB_PREFIX:-nocodb}.${DOMAIN}`)"
+      - traefik.http.routers.nocodb.entrypoints=web,websecure
+      - traefik.http.routers.nocodb.tls=true
+      - traefik.http.routers.nocodb.tls.certresolver=leresolver
+    networks: 
+      - traefik_network
+      - lan
+    restart: unless-stopped
+    volumes: 
+      - "nocodb-data:/usr/app/data"
+
+  nocodb-db: 
+    container_name: nocodb-db
+    environment: 
+      POSTGRES_DB: "${DB_NAME:-nocodb}"
+      POSTGRES_PASSWORD: "${DB_PASS}"
+      POSTGRES_USER: "${DB_USER:-nocodb}"
+    healthcheck: 
+      interval: 10s
+      retries: 10
+      test: "pg_isready -U ${DB_USER:-nocodb} -d ${DB_NAME:-nocodb}"
+      timeout: 2s
+    image: "postgres:15.1-alpine"
+    networks: 
+      - traefik_network
+      - lan
+    restart: unless-stopped
+    volumes: 
+      - "nocodb-db:/var/lib/postgresql/data"
+
+networks:
+  lan:
+  traefik_network:
+    external: true 
+
+volumes:
+  nocodb-data: 
+    name: nocodb-data
+  nocodb-db: 
+    name: nocodb-db
