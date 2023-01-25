@@ -47,13 +47,13 @@ services:
       - traefik_network
       - lan
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik_network"
-      - "traefik.http.routers.n8n.entrypoints=web,websecure"
-      - "traefik.http.routers.n8n.rule=Host(`${N8N_PREFIX:-n8n}.${DOMAIN}`)"
-      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
-      - "traefik.http.routers.n8n.tls=true"
-      - "traefik.http.routers.n8n.tls.certresolver=leresolver"
+      - traefik.enable=true
+      - traefik.docker.network=traefik_network
+      - traefik.http.routers.n8n.entrypoints=web,websecure
+      - traefik.http.routers.n8n.rule=Host(`${N8N_PREFIX:-n8n}.${DOMAIN}`)
+      - traefik.http.services.n8n.loadbalancer.server.port=5678
+      - traefik.http.routers.n8n.tls=true
+      - traefik.http.routers.n8n.tls.certresolver=leresolver
       - traefik.http.middlewares.n8n.headers.SSLRedirect=true
       - traefik.http.middlewares.n8n.headers.STSSeconds=315360000
       - traefik.http.middlewares.n8n.headers.browserXSSFilter=true
@@ -63,6 +63,10 @@ services:
       - traefik.http.middlewares.n8n.headers.STSIncludeSubdomains=true
       - traefik.http.middlewares.n8n.headers.STSPreload=true
       - traefik.http.routers.n8n.middlewares=n8n@docker
+      - traefik.http.middlewares.cors.headers.customResponseHeaders.Access-Control-Allow-Origin=*
+      - traefik.http.middlewares.cors.headers.customResponseHeaders.Access-Control-Allow-Methods=GET, POST, OPTIONS
+      - traefik.http.middlewares.cors.headers.customResponseHeaders.Access-Control-Allow-Headers=DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization
+      - traefik.http.routers.n8n.middlewares=cors@docker
 
 networks:
   lan:
