@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.9'
 services:
   database:
     image: mariadb
@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
-      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_RANDOM_ROOT_PASSWORD=no
       - MYSQL_DATABASE=${DB_NAME:-nextcloud}
       - MYSQL_USER=${DB_USER:-nextcloud}
       - MYSQL_PASSWORD=${DB_PASS}
@@ -17,10 +17,16 @@ services:
       - lan
     volumes:
       - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   nextcloud:
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     image: nextcloud
     container_name: nextcloud_app
     restart: unless-stopped
@@ -37,7 +43,7 @@ services:
       - lan
       - traefik_network
     volumes:
-      - ${NEXTCLOUD_DATA_DIR}:/var/www/html
+      - ${DATA_DIR}:/var/www/html
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"

@@ -1,4 +1,4 @@
-version: '3.8'
+version: '.8'
 
 services:
   mautic_db:
@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
-      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_RANDOM_ROOT_PASSWORD=false
       - MYSQL_DATABASE=${DB_NAME:-mautic}
       - MYSQL_USER=${DB_USER:-mautic}
       - MYSQL_PASSWORD=${DB_PASS}
@@ -17,7 +17,12 @@ services:
     networks:
       - lan
     volumes:
-      - db_data3:/var/lib/mysql
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   mautic:
     image: mautic/mautic:latest
@@ -26,14 +31,13 @@ services:
     links:
       - mautic_db:mysql
     depends_on:
-      - mautic_db
-        # ports:
-        #   - ${MAUTIC_PORT:-8080}:80
+      mautic_db:
+        condition: service_healthy
     volumes:
-      - mautic_data3:/var/www/html
+      - mautic_data:/var/www/html
     environment:
       - MAUTIC_DB_HOST=mautic_db
-      - MYSQL_PORT_3306_TCP=3306
+      - MYSQL_PORT_06_TCP=06
       - MAUTIC_DB_USER=${DB_USER:-mautic}
       - MAUTIC_DB_PASSWORD=$DB_PASS
       - MAUTIC_DB_NAME=${DB_NAME:-mautic}
@@ -51,9 +55,9 @@ services:
       - "traefik.http.routers.mautic.tls.certresolver=leresolver"
 
 volumes:
-  db_data3:
+  db_data:
     driver: local
-  mautic_data3:
+  mautic_data:
     driver: local
 
 networks:
