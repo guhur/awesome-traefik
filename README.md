@@ -25,9 +25,11 @@ Here is a list of services that can directly be launched:
 - [nginx](#generic) is used for static file delivery
 - [nextcloud](#nextcloud) is a file-hosting service
 - [nocodb](#nocodb) is a no-code database alternative to Airtable
+- [php](#generic) is an Nginx with PHP 7.1 container
 - [portainer](#generic) is a tool for Docker
 - [weblate](#generic) is a translation management system 
 - [wordpress](#generic) is the most famous content management system
+
 
 If you need another service, you can open an issue or contact me directly on Linkedin.
 

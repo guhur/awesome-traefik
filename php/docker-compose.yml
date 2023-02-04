@@ -1,0 +1,76 @@
+version: '3.9'
+
+services:
+  web:
+    image: nginxphp
+    build: .
+    volumes:
+      - ./nginx:/etc/nginx/conf.d/
+      - $DATA_DIR:/var/www/html
+      - logs-web:/var/log/nginx
+        # depends_on:
+        #   - database
+    restart: unless-stopped
+    environment:
+      - PUID=$PUID
+      - PGID=$PUID
+      - TIMEZONE=$TIMEZONE
+    ports:
+      - 8180:80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.php.entrypoints=web,websecure"
+      - "traefik.http.routers.php.rule=Host(`${PHP_PREFIX:-php}.${DOMAIN}`)"
+      - "traefik.http.services.php.loadbalancer.server.port=80"
+      - "traefik.http.routers.php.tls=true"
+      - "traefik.http.routers.php.tls.certresolver=leresolver"
+    networks:
+      - lan
+      - traefik_network
+
+        # database:
+        #   image: mariadb
+        #   container_name: php_database
+        #   restart: unless-stopped
+        #   command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+        #   environment:
+        #     - MYSQL_RANDOM_ROOT_PASSWORD=no
+        #     - MYSQL_DATABASE=${DB_NAME:-php}
+        #     - MYSQL_USER=${DB_USER:-php}
+        #     - MYSQL_PASSWORD=${DB_PASS}
+        #     - PUID=$PUID
+        #     - PGID=$PUID
+        #     - TZ=$TIMEZONE
+        #   networks:
+        #     - lan
+        #   volumes:
+        #     - db:/var/lib/mysql
+        #   healthcheck:
+        #     test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+        #     interval: 30s
+        #     timeout: 10s
+        #     retries: 3
+
+
+volumes:
+  logs-php-fpm:
+  logs-web:
+  db:
+    # php_dir: 
+    #   driver: local
+    #   driver_opts:
+    #     type: 'none'
+    #     o: 'bind'
+    #     device: ${DATA_DIR}
+    # nginx_dir: 
+    #   driver: local
+    #   driver_opts:
+    #     type: 'none'
+    #     o: 'bind'
+    #     device: ${NGINX_DIR:-php/nginx/}
+
+networks:
+  lan:
+  traefik_network:
+    external: true
