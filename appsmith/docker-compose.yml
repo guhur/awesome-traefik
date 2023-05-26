@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  appsmith:
+    image: index.docker.io/appsmith/appsmith-ce
+    container_name: appsmith
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - appsmith:/appsmith-stacks
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.appsmith.entrypoints=web,websecure"
+      - "traefik.http.routers.appsmith.rule=Host(`${APPSMITH_PREFIX:-appsmith}.${DOMAIN}`)"
+      - "traefik.http.services.appsmith.loadbalancer.server.port=80"
+      - "traefik.http.routers.appsmith.tls=true"
+      - "traefik.http.routers.appsmith.tls.certresolver=leresolver"
+        # healthcheck:
+        #   test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+        #   interval: 30s
+        #   timeout: 10s
+        #   retries: 3
+
+
+volumes:
+  # Store on a local folder
+  appsmith:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${APPSMITH_DATA_DIR:-./appsmith}
+
+networks:
+  lan:
+  traefik_network:
+    external: true 
