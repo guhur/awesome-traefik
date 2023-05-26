@@ -16,6 +16,7 @@ Docker Compose version v2.10.2
 
 Here is a list of services that can directly be launched:
 
+- [appsmiimth](#generic) is a low-code platforme for building internal CRUD interfaces.
 - [collabora](#collabora) is an online version of LibreOffice
 - [freescout](#freescout) is a help-desk
 - [matomo](#matomo) is a web-analytics tool
