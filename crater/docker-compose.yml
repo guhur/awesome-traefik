@@ -2,7 +2,7 @@ version: '3.7'
 services:
   database:
     image: mariadb
-    container_name: crater_db
+    container_name: crater-db
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:

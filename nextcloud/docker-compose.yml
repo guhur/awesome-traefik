@@ -1,15 +1,15 @@
 version: '3.8'
 services:
-  database:
+  nextcloud_db:
     image: mariadb
     container_name: nextcloud_database
     restart: unless-stopped
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     environment:
-      - MYSQL_RANDOM_ROOT_PASSWORD=no
       - MYSQL_DATABASE=${DB_NAME:-nextcloud}
       - MYSQL_USER=${DB_USER:-nextcloud}
       - MYSQL_PASSWORD=${DB_PASS}
+      - MYSQL_ROOT_PASSWORD=${DB_PASS}
       - PUID=$PUID
       - PGID=$PUID
       - TZ=$TIMEZONE
@@ -18,14 +18,14 @@ services:
     volumes:
       - db:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "--silent"]
       interval: 30s
       timeout: 10s
       retries: 3
 
   nextcloud:
     depends_on:
-      database:
+      nextcloud_db:
         condition: service_healthy
     image: nextcloud
     container_name: nextcloud_app
@@ -39,6 +39,26 @@ services:
       - PUID=$PUID
       - PGID=$PUID
       - TZ=$TIMEZONE
+      - SMPT_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_SECURE=${SMTP_SECURE:-ssl}
+      - SMTP_NAME=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_USER}
+      - PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT:-2G}
+      - PHP_UPLOAD_LIMIT=${PHP_UPLOAD_LIMIT:-2G}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:-}
+      - OBJECTSTORE_S3_HOST=${OBJECTSTORE_S3_HOST:-}
+      - OBJECTSTORE_S3_PORT=${OBJECTSTORE_S3_PORT:-}
+      - OBJECTSTORE_S3_USEPATHSTYLE=${OBJECTSTORE_S3_USEPATHSTYLE:-false}
+      - OBJECTSTORE_S3_KEY=${OBJECTSTORE_S3_KEY:-}
+      - OBJECTSTORE_S3_SECRET=${OBJECTSTORE_S3_SECRET:-}
+      - OBJECTSTORE_S3_BUCKET=${OBJECTSTORE_S3_BUCKET:-}
+      - OBJECTSTORE_S3_REGION=${OBJECTSTORE_S3_REGION:-}
+      - OBJECTSTORE_S3_SSL=${OBJECTSTORE_S3_SSL:-true}
+      - OBJECTSTORE_S3_AUTOCREATE=${OBJECTSTORE_S3_AUTOCREATE:-true}
+
     networks:
       - lan
       - traefik_network
@@ -60,12 +80,14 @@ services:
     depends_on:
       - nextcloud
     image: restic
+    profiles:
+      - backup
     container_name: nextcloud_restic
     build:
       context: ../restic
       dockerfile: Dockerfile
       args:
-        RESTIC_INIT_ARGS: $RESTIC_INIT_ARGS
+        RESTIC_INIT_ARGS: ${RESTIC_INIT_ARGS:-}
         RESTIC_PASSWORD: $RESTIC_PASSWORD
     restart: unless-stopped
     volumes:
