@@ -1,5 +1,23 @@
-version: '3.7'
+version: '3.8'
 services:
+  database2:
+    image: mariadb
+    container_name: crater-db2
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+        MYSQL_USER: crater
+        MYSQL_PASSWORD: crater
+        MYSQL_DATABASE: crater
+        MYSQL_ROOT_PASSWORD: crater
+        PUID: $PUID
+        PGID: $PUID
+        TZ: $TIMEZONE
+    networks:
+      - lan
+    volumes:
+      - ./db/data:/var/lib/mysql:rw,delegated
+
   database:
     image: mariadb
     container_name: crater-db
@@ -16,7 +34,7 @@ services:
     networks:
       - lan
     volumes:
-      - db:/var/lib/mysql
+      - ./db/data:/var/lib/mysql:rw,delegated
 
   crater:
     build:
@@ -26,6 +44,8 @@ services:
       context: ./crater
       dockerfile: Dockerfile
     hostname: crater_app
+    environment:
+      DB_HOST: crater-db
     depends_on:
       - database
     image: crater-php
@@ -63,9 +83,6 @@ services:
       - ./crater/:/var/www
     networks:
       - lan
-
-volumes:
-  db:
 
 networks:
   lan:

@@ -1,4 +1,4 @@
-FROM n8nio/n8n:latest
+FROM n8nio/n8n:next
 
 # Install additional packages
 RUN apk add --update --no-cache python3 build-base && ln -sf python3 /usr/bin/python

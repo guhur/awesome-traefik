@@ -7,3 +7,6 @@
 [submodule "crater/crater"]
 	path = crater/crater
 	url = https://github.com/guhur/crater
+[submodule "invoiceninja/dockerfiles"]
+	path = invoiceninja/dockerfiles
+	url = https://github.com/invoiceninja/dockerfiles.git

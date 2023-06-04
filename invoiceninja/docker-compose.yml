@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  server:
+    image: nginx
+    restart: always
+    env_file: .env.local
+    volumes:
+      # Vhost configuration
+      #- ./config/caddy/Caddyfile:/etc/caddy/Caddyfiledocker-com
+      - ./config/nginx/in-vhost.conf:/etc/nginx/conf.d/in-vhost.conf:ro
+      - ./docker/app/public:/var/www/app/public:ro
+    depends_on:
+      - app
+    networks:
+      - lan
+      - traefik_network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_network
+      - traefik.http.routers.invoiceninja.entrypoints=web,websecure
+      - traefik.http.routers.invoiceninja.rule=Host(`${INVOICENINJA_PREFIX:-in}.${DOMAIN}`)
+      - traefik.http.services.invoiceninja.loadbalancer.server.port=80
+      - traefik.http.routers.invoiceninja.tls=true
+      - traefik.http.routers.invoiceninja.tls.certresolver=leresolver
+
+  app:
+    image: invoiceninja/invoiceninja:5
+    env_file: .env.local
+    restart: unless-stopped
+    volumes:
+      - ./config/hosts:/etc/hosts:ro
+      - ./docker/app/public:/var/www/app/public:rw,delegated
+      - ./docker/app/storage:/var/www/app/storage:rw,delegated
+    depends_on:
+      - db
+    networks:
+      - lan
+
+  db:
+    image: mysql:8
+    ports:
+      - "3305:3306"
+    restart: unless-stopped
+    env_file: .env.local
+    volumes:
+      - ./docker/mysql/data:/var/lib/mysql:rw,delegated
+
+      # remove comments for next 4 lines if you want auto sql backups
+      #- ./docker/mysql/bak:/backups:rw
+      #- ./config/mysql/backup-script:/etc/cron.daily/daily:ro
+      #- ./config/mysql/backup-script:/etc/cron.weekly/weekly:ro
+      #- ./config/mysql/backup-script:/etc/cron.monthly/monthly:ro
+    networks:
+      - lan
+
+networks:
+  lan:
+  traefik_network:
+    external: true 
