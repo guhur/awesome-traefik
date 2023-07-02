@@ -14,10 +14,9 @@ services:
       - TZ=Europe/Paris
     volumes:
       - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+      - ${VOLUME_DB:-$HOME/.data/db}:/var/lib/mysql
     networks:
       - lan
-    volumes:
-      - db:/var/lib/mysql
 
   n8n:
     image: n8n
@@ -79,6 +78,3 @@ networks:
   lan:
   traefik_network:
     external: true 
-
-volumes:
-  db:
