@@ -5,3 +5,5 @@
 logs
 db
 dbbackup
+odoo/volume
+invoiceninja/.env

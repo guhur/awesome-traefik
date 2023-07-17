@@ -29,7 +29,7 @@ services:
     env_file: .env.local
     restart: unless-stopped
     volumes:
-      - ./config/hosts:/etc/hosts:ro
+      - ./config/hosts:/etc/hosts
       - ./docker/app/public:/var/www/app/public:rw,delegated
       - ./docker/app/storage:/var/www/app/storage:rw,delegated
     depends_on:
