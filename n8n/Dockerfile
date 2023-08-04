@@ -15,12 +15,6 @@ RUN if [ "$WITH_LATEX" = "true" ]; \
     then apk --no-cache --update add texmf-dist texlive-xetex texlive; \
     fi
 RUN if [ "$WITH_DOC2PDF" = "true" ]; \
-    then apk --no-cache --update add libreoffice && \
-        wget https://github.com/google/fonts/archive/main.tar.gz -O gf.tar.gz --no-check-certificate && \
-        tar -xf gf.tar.gz && \
-        mkdir -p /usr/share/fonts/truetype/google-fonts && \
-        find $PWD/fonts-main/ -name "*.ttf" -exec install -m644 {} /usr/share/fonts/truetype/google-fonts/ \; || return 1 && \
-        rm -f gf.tar.gz && \
-        fc-cache -f && rm -rf /var/cache/*; \
+    then apk --no-cache --update add libreoffice ; \
     fi
 USER node
