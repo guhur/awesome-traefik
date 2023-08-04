@@ -25,8 +25,9 @@ services:
       context: ./
       dockerfile: Dockerfile
       args:
-        - WITH_PYPDF=${WITH_PYPDF:-true}
-        - WITH_LATEX=${WITH_LATEX:-true}
+        - WITH_PYPDF=${WITH_PYPDF:-false}
+        - WITH_LATEX=${WITH_LATEX:-false}
+        - WITH_DOC2PDF=${WITH_DOC2PDF:-false}
     container_name: n8n
     restart: unless-stopped
     depends_on:

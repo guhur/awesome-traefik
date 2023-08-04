@@ -4,9 +4,9 @@ services:
   appsmith:
     image: index.docker.io/appsmith/appsmith-ce
     container_name: appsmith
-    ports:
-      - "8080:80"
-      - "8443:443"
+      # ports:
+      #   - "8080:80"
+      #   - "8443:443"
     volumes:
       - appsmith:/appsmith-stacks
     restart: unless-stopped
