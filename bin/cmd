@@ -47,7 +47,9 @@ if [ -z ${cmd+x} ]; then
 fi
 case "$cmd" in
     boot) cmd="up -d --force-recreate --build";;
+    start) cmd="up -d";;
     log) cmd="logs -f";;
+    stop) cmd="down";;
     *) cmd="$cmd"
 esac
 
@@ -77,5 +79,7 @@ fi
 
 
 pushd "$ROOT_DIR/$service"
+	set -x
 	docker compose --env-file $tmp_envfile $cmd
+	set +x
 popd

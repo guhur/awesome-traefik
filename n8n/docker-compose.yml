@@ -14,9 +14,15 @@ services:
       - TZ=Europe/Paris
     volumes:
       - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
-      - ${VOLUME_DB:-$HOME/.data/db}:/var/lib/mysql
+      - ${VOLUME_DB:-$HOME/.data/db}:/var/lib/postgresql/data
     networks:
       - lan
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${DB_USER:-n8n} -d ${DB_NAME:-n8n}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 
   n8n:
     image: n8n
@@ -28,10 +34,12 @@ services:
         - WITH_PYPDF=${WITH_PYPDF:-false}
         - WITH_LATEX=${WITH_LATEX:-false}
         - WITH_DOC2PDF=${WITH_DOC2PDF:-false}
+        - LOCALE=${LOCALE:-en}
     container_name: n8n
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       - PUID=$PUID
       - PGID=$PGID

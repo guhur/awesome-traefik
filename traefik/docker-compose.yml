@@ -34,7 +34,7 @@ services:
       - '--api.dashboard'
       - '--entrypoints.websecure.http.middlewares=compress@file,headers@file${TRAEFIK_PLUGINS:-}'
       - '--experimental.plugins.fail2ban.modulename=github.com/tommoulard/fail2ban'
-      - '--experimental.plugins.fail2ban.version=v0.6.0'
+      - '--experimental.plugins.fail2ban.version=v0.6.6'
       - '--global.checknewversion=${TRAEFIK_CHECK_NEW_VERSION:-false}'
       - '--global.sendanonymoususage=${TRAEFIK_SEND_ANONYMOUS_USAGE:-false}'
       - '--pilot.token=${TRAEFIK_PILOT_TOKEN:-}'
