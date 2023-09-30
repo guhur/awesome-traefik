@@ -34,6 +34,7 @@ services:
         - WITH_PYPDF=${WITH_PYPDF:-false}
         - WITH_LATEX=${WITH_LATEX:-false}
         - WITH_DOC2PDF=${WITH_DOC2PDF:-false}
+        - WITH_POSTGRES=${WITH_POSTGRES:-false}
         - LOCALE=${LOCALE:-en}
     container_name: n8n
     restart: unless-stopped

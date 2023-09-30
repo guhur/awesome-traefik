@@ -2,6 +2,7 @@ FROM n8nio/n8n:next
 ARG WITH_PYPDF=false
 ARG WITH_LATEX=false
 ARG WITH_DOC2PDF=false
+ARG WITH_POSTGRES=false
 ARG LOCALE
 
 # Install additional packages depending on build arguments
@@ -12,12 +13,10 @@ RUN apk --update --no-cache add ttf-dejavu font-noto-emoji fontconfig linux-head
 COPY fonts/ /usr/share/fonts/truetype/
 RUN fc-cache -fv
 
-# ENV LANG fr_FR.UTF-8  
-# ENV LANGUAGE fr_FR:fr  
-# ENV LC_ALL fr_FR.UTF-8 
-# 
-# RUN apk --update --no-cache add tzdata musl-locales  musl-locales-lang lang && \
-# locale-gen fr_FR.UTF-8 ;
+RUN if [ "$WITH_POSTGRES" = "true" ] ; \
+     then apk --update --no-cache add postgresql-dev postgresql-client && \
+     rm -rf /var/cache/apk/* ; \
+     fi
 
 RUN if [ "$WITH_PYPDF" = "true" ]; \
     then ln -sf python3 /usr/bin/python && \
