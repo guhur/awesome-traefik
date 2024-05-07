@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     container_name: metabase
     environment:
+      # Set up a DB connection
       # MB_DB_TYPE: mysql
       # MB_DB_DBNAME: $DB_NAME
       # MB_DB_PORT: $DB_PORT
@@ -22,7 +23,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
       - "traefik.http.routers.metabase.entrypoints=web,websecure"
-      - "traefik.http.routers.metabase.rule=Host(metabase.`${DOMAIN}`)"
+      - "traefik.http.routers.metabase.rule=Host(`${METABASE_PREFIX:-metabase}.${DOMAIN}`)"
       - "traefik.http.services.metabase.loadbalancer.server.port=3000"
       - "traefik.http.routers.metabase.tls=true"
       - "traefik.http.routers.metabase.tls.certresolver=leresolver"
